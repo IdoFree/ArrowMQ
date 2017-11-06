@@ -1,7 +1,7 @@
 package com.yundan.server;
 
 
-import com.yundan.server.handler.MQHandler;
+import com.yundan.server.handler.arrow.MessageDecodeHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -10,6 +10,8 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.LineBasedFrameDecoder;
+
 public class ArrowServer {
 
 
@@ -29,7 +31,7 @@ public class ArrowServer {
                     .childHandler(new ChannelInitializer<SocketChannel>() { // (4)
                         @Override
                         public void initChannel(SocketChannel ch) throws Exception {
-                            ch.pipeline().addLast(new MQHandler());
+                            ch.pipeline().addLast(new LineBasedFrameDecoder(1024,false,true),new MessageDecodeHandler());
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 128)          // (5)

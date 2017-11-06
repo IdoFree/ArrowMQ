@@ -1,5 +1,7 @@
 package com.yundan.server;
 
+import com.yundan.server.domain.MqMessage;
+
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -10,6 +12,11 @@ public class ArrowMq {
 
      ArrowMq(){
         msgPipeline = new ConcurrentHashMap<String , Queue<Object>>();
+    }
+
+
+    public void putMsg(MqMessage mqMessage){
+        this.putMsg(mqMessage.getChannel(),mqMessage.getMessage());
     }
 
     public void putMsg(String pipelineName, Object msg){

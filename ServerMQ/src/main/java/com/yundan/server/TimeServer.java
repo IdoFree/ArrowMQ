@@ -1,6 +1,10 @@
 package com.yundan.server;
 
+import com.sun.corba.se.impl.activation.CommandHandler;
 import com.yundan.server.handler.TimeServerHandler;
+import com.yundan.server.handler.timer.CmmandHandler;
+import com.yundan.server.handler.timer.CommandDecoder;
+import com.yundan.server.handler.timer.ResultEncoder;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -28,7 +32,7 @@ public class TimeServer {
                     .childHandler(new ChannelInitializer<SocketChannel>() { // (4)
                         @Override
                         public void initChannel(SocketChannel ch) throws Exception {
-                            ch.pipeline().addLast(new TimeServerHandler.OutHandler(),new TimeServerHandler(),new TimeServerHandler.FlashHandler());
+                            ch.pipeline().addLast(new CommandDecoder(),new CmmandHandler(),new ResultEncoder());
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 128)          // (5)
