@@ -1,20 +1,24 @@
 package com.yundan.server.handler.arrow;
 
+import com.yundan.common.Response;
+import com.yundan.common.TransportData;
 import com.yundan.server.MessageQueueFactory;
-import com.yundan.server.domain.MqMessage;
+import com.yundan.server.exception.NoSuchPileLineException;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.handler.codec.LineBasedFrameDecoder;
+import io.netty.handler.codec.haproxy.HAProxyProxiedProtocol;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.Slf4JLoggerFactory;
 
 import java.nio.charset.Charset;
+import java.util.logging.Logger;
 
 public class MessageDecodeHandler extends ChannelInboundHandlerAdapter {
-
+    InternalLogger  logger = Slf4JLoggerFactory.getInstance(MessageDecodeHandler.class);
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object lineBuf) throws Exception {
-//        byte[] line = new byte[((ByteBuf) lineBuf).readableBytes()];
+    public void channelRead(ChannelHandlerContext ctx, Object lineBuf)  {
 
         String line = ((ByteBuf) lineBuf).toString(Charset.defaultCharset());
         line = line.trim();
@@ -24,20 +28,37 @@ public class MessageDecodeHandler extends ChannelInboundHandlerAdapter {
         } else {
             System.out.println("Got msg: " + line);
             String[] m = line.split(":");
-            if(m.length ==1){
-                String msg = (String) MessageQueueFactory.getArrowMq().getMsg(m[0]);
-                ByteBuf bf = ctx.alloc().buffer(128);
-                bf.writeBytes(msg.getBytes());
-                ctx.writeAndFlush(bf);
-            }else{
+            //only specify the channel name , mean to get the message in the pipe line
+                if(m.length ==1){
+                    String msg = null;
+                    try {
+                        msg = (String) MessageQueueFactory.getArrowMq().getMsg(m[0]);
+                    } catch (NoSuchPileLineException e) {
+                        logger.error("no such pipe line "+m[0]);
+                        ((ByteBuf) lineBuf).release();
+                        ctx.channel().close();
 
-                MessageQueueFactory.getArrowMq().putMsg(m[0],m[1]);
-            }
+                    }
+                    if(msg == null){
+                        Response rsp = new Response("no message available");
+                        ByteBuf bf = ctx.alloc().buffer(rsp.getTransportData().length());
+                        bf.writeBytes(rsp.getTransportData().getBytes());
+                        ctx.writeAndFlush(bf);
+                        return ;
+                    }
+                    Response rsp = new Response(msg);
 
-            // reuse the ByteBuf, no need to release as it is released on writing to wire
-//            ctx.write(lineBuf);
-            // force write
-//            ctx.flush();
+                    ByteBuf bf = ctx.alloc().buffer(rsp.getTransportData().length());
+                    bf.writeBytes(msg.getBytes());
+                    ctx.writeAndFlush(bf);
+                }else{
+
+                    MessageQueueFactory.getArrowMq().putMsg(m[0],m[1]);
+                }
+
+
+
+
         }
     }
 

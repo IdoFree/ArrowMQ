@@ -1,22 +1,39 @@
 package com.yundan.arrowmq.handler;
 
+import com.yundan.arrowmq.core.Channel;
 import com.yundan.arrowmq.core.ChannelHandler;
-import com.yundan.arrowmq.domain.TransportData;
+import com.yundan.arrowmq.core.MessageRepository;
+import com.yundan.common.TransportData;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufProcessor;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.handler.codec.MessageToByteEncoder;
+
+import java.nio.charset.Charset;
 
 
-public class DriverHandler extends MessageToByteEncoder<TransportData> {
+public class DriverHandler extends ChannelInboundHandlerAdapter {
     private ChannelHandler channelHandler;
 
+    @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        ctx.alloc().buffer(10);
-        TransportData data = new TransportData(channelHandler.getChannel(),channelHandler.getData());
+//        System.out.println(ctx.channel().toString());
+//        String msg = "test:data\r\n";
+//        ByteBuf buf = ctx.alloc().buffer(msg.length());
+//        buf.writeBytes(msg.getBytes());
+//        System.out.println("active");
+//        ctx.channel().writeAndFlush(buf);
+        ;
+        System.out.println(ctx.channel().toString());
+        ByteBuf buf  = Unpooled.copiedBuffer(MessageRepository.getMessage(ctx.channel().toString()), Charset.defaultCharset());
+        ctx.channel().writeAndFlush(buf);
     }
 
+    @Override
+    public void channelRead(ChannelHandlerContext ctx, Object linebuf) throws Exception {
+        String line = ((ByteBuf) linebuf).toString(Charset.defaultCharset());
+        MessageRepository.putMessage(ctx.channel(),line);
+    }
 
 
     @Override
@@ -26,8 +43,5 @@ public class DriverHandler extends MessageToByteEncoder<TransportData> {
     }
 
 
-    @Override
-    protected void encode(ChannelHandlerContext channelHandlerContext, TransportData transportData, ByteBuf byteBuf) throws Exception {
-        int len = transportData.getChannel().length();
-    }
+
 }

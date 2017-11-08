@@ -1,8 +1,10 @@
-package com.yundan.arrowmq.domain;
+package com.yundan.common;
 
-public class TransportData {
+public class TransportData implements TransportPotocol {
     private String channel;
     private Object data;
+
+
 
     public TransportData() {
     }
@@ -26,5 +28,12 @@ public class TransportData {
 
     public void setData(Object data) {
         this.data = data;
+    }
+
+
+
+    @Override
+    public String getTransportData() {
+        return this.channel+":"+ this.data.toString()+"\r\n";
     }
 }

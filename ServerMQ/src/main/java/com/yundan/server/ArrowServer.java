@@ -2,6 +2,7 @@ package com.yundan.server;
 
 
 import com.yundan.server.handler.arrow.MessageDecodeHandler;
+import com.yundan.server.handler.arrow.MessageHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -31,7 +32,7 @@ public class ArrowServer {
                     .childHandler(new ChannelInitializer<SocketChannel>() { // (4)
                         @Override
                         public void initChannel(SocketChannel ch) throws Exception {
-                            ch.pipeline().addLast(new LineBasedFrameDecoder(1024,false,true),new MessageDecodeHandler());
+                            ch.pipeline().addLast(new LineBasedFrameDecoder(1024,false,true),new MessageDecodeHandler(),new MessageHandler());
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 128)          // (5)

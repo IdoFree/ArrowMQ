@@ -1,6 +1,7 @@
 package com.yundan.server;
 
 import com.yundan.server.domain.MqMessage;
+import com.yundan.server.exception.NoSuchPileLineException;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -11,7 +12,7 @@ public class ArrowMq {
     private ConcurrentHashMap<String,Queue<Object>> msgPipeline;
 
      ArrowMq(){
-        msgPipeline = new ConcurrentHashMap<String , Queue<Object>>();
+        msgPipeline = new ConcurrentHashMap<>();
     }
 
 
@@ -24,7 +25,7 @@ public class ArrowMq {
             throw new IllegalArgumentException("Pipe line name can not be null");
         }
         if(msgPipeline.get(pipelineName) == null){
-            Queue<Object> queue = new ConcurrentLinkedDeque<Object>();
+            Queue<Object> queue = new ConcurrentLinkedDeque<>();
             queue.add(msg);
             msgPipeline.put(pipelineName,queue);
         }else{
@@ -33,9 +34,13 @@ public class ArrowMq {
     }
 
 
-    public Object getMsg(String pipelineName){
+    public Object getMsg(String pipelineName) throws NoSuchPileLineException {
         if(pipelineName == null){
             throw new IllegalArgumentException("Pipe line name can not be null");
+        }
+
+        if(msgPipeline.get(pipelineName) == null){
+            throw new NoSuchPileLineException();
         }
 
         if(msgPipeline.get(pipelineName).peek()==null){
